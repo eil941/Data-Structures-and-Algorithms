@@ -61,92 +61,118 @@ size_t getBSTNodeHeight(BSTNode* node);
 void clearBinarySearchTree(BinarySearchTree* tree);
 void clearBSTNode(BSTNode* node);
 
-signed main(void) {
+void printBSTTree(BinarySearchTree* tree);
+size_t getBSTMaxDataWidth(BSTNode* node);
+size_t drawBSTTreeNode(BSTNode* node, size_t depth, size_t* index,
+                       size_t cellWidth, char* canvas, size_t lineWidth);
+
+int main(void) {
   BinarySearchTree tree;
   BSTNode* p;
+  int select;
+  int data;
 
   initBinarySearchTree(&tree);
 
-  /*
-              20
-            /    \
-          10      30
-         /  \    /  \
-        5   15  25  40
-           /
-          12
-  */
+  while (1) {
+    printf("\n");
+    printf("0 : insert\n");
+    printf("1 : remove\n");
+    printf("2 : find\n");
+    printf("3 : tree\n");
+    printf("4 : preorder\n");
+    printf("5 : inorder\n");
+    printf("6 : postorder\n");
+    printf("7 : size\n");
+    printf("8 : leaf count\n");
+    printf("9 : height\n");
+    printf("10: clear\n");
+    printf("11: exit\n");
+    printf("> ");
 
-  insertBST(&tree, 20);
-  insertBST(&tree, 10);
-  insertBST(&tree, 30);
-  insertBST(&tree, 5);
-  insertBST(&tree, 15);
-  insertBST(&tree, 25);
-  insertBST(&tree, 40);
-  insertBST(&tree, 12);
+    scanf("%d", &select);
 
-  printf("Preorder  : ");
-  printBSTPreorder(&tree);
+    switch (select) {
+      case 0:
+        printf("data: ");
+        scanf("%d", &data);
 
-  printf("Inorder   : ");
-  printBSTInorder(&tree);
+        if (insertBST(&tree, data)) {
+          printf("inserted\n");
+        } else {
+          printf("insert failed\n");
+        }
+        break;
 
-  printf("Postorder : ");
-  printBSTPostorder(&tree);
+      case 1:
+        printf("data: ");
+        scanf("%d", &data);
 
-  printf("Tree size   : %zu\n", getBSTSize(&tree));
-  printf("Leaf count  : %zu\n", getBSTLeafCount(&tree));
-  printf("Tree height : %zu\n", getBSTHeight(&tree));
+        if (removeBST(&tree, data)) {
+          printf("removed\n");
+        } else {
+          printf("not found\n");
+        }
+        break;
 
-  p = findBSTNode(&tree, 25);
-  if (p != NULL) {
-    printf("find 25 : %d\n", getBSTNodeData(p));
+      case 2:
+        printf("data: ");
+        scanf("%d", &data);
+
+        p = findBSTNode(&tree, data);
+
+        if (p != NULL) {
+          printf("found: %d\n", getBSTNodeData(p));
+        } else {
+          printf("not found\n");
+        }
+        break;
+
+      case 3:
+        printBSTTree(&tree);
+        break;
+
+      case 4:
+        printf("Preorder  : ");
+        printBSTPreorder(&tree);
+        break;
+
+      case 5:
+        printf("Inorder   : ");
+        printBSTInorder(&tree);
+        break;
+
+      case 6:
+        printf("Postorder : ");
+        printBSTPostorder(&tree);
+        break;
+
+      case 7:
+        printf("Tree size: %zu\n", getBSTSize(&tree));
+        break;
+
+      case 8:
+        printf("Leaf count: %zu\n", getBSTLeafCount(&tree));
+        break;
+
+      case 9:
+        printf("Tree height: %zu\n", getBSTHeight(&tree));
+        break;
+
+      case 10:
+        clearBinarySearchTree(&tree);
+        printf("cleared\n");
+        break;
+
+      case 11:
+        clearBinarySearchTree(&tree);
+        return 0;
+
+      default:
+        printf("invalid input\n");
+        break;
+    }
   }
-
-  p = findBSTNode(&tree, 100);
-  if (p == NULL) {
-    printf("100 not found\n");
-  }
-
-  printf("\n");
-
-  /* 子が0個のノードを削除 */
-  printf("remove 5\n");
-  removeBST(&tree, 5);
-  printf("Inorder : ");
-  printBSTInorder(&tree);
-
-  /* 子が1個のノードを削除 */
-  printf("remove 15\n");
-  removeBST(&tree, 15);
-  printf("Inorder : ");
-  printBSTInorder(&tree);
-
-  /* 子が2個のノードを削除 */
-  printf("remove 30\n");
-  removeBST(&tree, 30);
-  printf("Inorder : ");
-  printBSTInorder(&tree);
-
-  /* rootを削除 */
-  printf("remove 20\n");
-  removeBST(&tree, 20);
-  printf("Inorder : ");
-  printBSTInorder(&tree);
-
-  printf("\n");
-
-  printf("Tree size   : %zu\n", getBSTSize(&tree));
-  printf("Leaf count  : %zu\n", getBSTLeafCount(&tree));
-  printf("Tree height : %zu\n", getBSTHeight(&tree));
-
-  clearBinarySearchTree(&tree);
-
-  printf("\nAfter clear\n");
-  printf("Tree size : %zu\n", getBSTSize(&tree));
-
-  return 0;
 }
 
 /* getter / setter */
@@ -428,4 +454,118 @@ BSTNode* getMinBSTNode(BSTNode* node) {
   }
 
   return getMinBSTNode(getLeftBSTNode(node));
+}
+
+void printBSTTree(BinarySearchTree* tree) {
+  BSTNode* root;
+  size_t size, height, maxDataWidth;
+  size_t cellWidth, lineWidth, rows;
+  size_t index = 0;
+  char* canvas;
+
+  root = getBSTRoot(tree);
+
+  if (root == NULL) {
+    printf("(empty)\n");
+    return;
+  }
+
+  size = getBSTSize(tree);
+  height = getBSTHeight(tree);
+  maxDataWidth = getBSTMaxDataWidth(root);
+
+  cellWidth = maxDataWidth + 3;
+  lineWidth = size * cellWidth;
+  rows = height * 2 - 1;
+
+  canvas = (char*)malloc(rows * (lineWidth + 1));
+  if (canvas == NULL) {
+    return;
+  }
+
+  for (size_t row = 0; row < rows; row++) {
+    for (size_t col = 0; col < lineWidth; col++) {
+      canvas[row * (lineWidth + 1) + col] = ' ';
+    }
+    canvas[row * (lineWidth + 1) + lineWidth] = '\0';
+  }
+
+  drawBSTTreeNode(root, 0, &index, cellWidth, canvas, lineWidth);
+
+  for (size_t row = 0; row < rows; row++) {
+    char* line = &canvas[row * (lineWidth + 1)];
+    size_t end = lineWidth;
+
+    while (end > 0 && line[end - 1] == ' ') {
+      end--;
+    }
+
+    line[end] = '\0';
+    printf("%s\n", line);
+  }
+
+  free(canvas);
+}
+
+size_t getBSTMaxDataWidth(BSTNode* node) {
+  char buffer[32];
+  size_t current, left, right;
+
+  if (node == NULL) {
+    return 0;
+  }
+
+  current =
+      (size_t)snprintf(buffer, sizeof(buffer), "%d", getBSTNodeData(node));
+
+  left = getBSTMaxDataWidth(getLeftBSTNode(node));
+  right = getBSTMaxDataWidth(getRightBSTNode(node));
+
+  return max(current, max(left, right));
+}
+
+size_t drawBSTTreeNode(BSTNode* node, size_t depth, size_t* index,
+                       size_t cellWidth, char* canvas, size_t lineWidth) {
+  BSTNode *left, *right;
+  size_t leftX = 0;
+  size_t rightX = 0;
+  size_t x;
+  size_t row;
+  char buffer[32];
+  int length;
+
+  left = getLeftBSTNode(node);
+  right = getRightBSTNode(node);
+
+  if (left != NULL) {
+    leftX =
+        drawBSTTreeNode(left, depth + 1, index, cellWidth, canvas, lineWidth);
+  }
+
+  x = (*index) * cellWidth + cellWidth / 2;
+  (*index)++;
+
+  if (right != NULL) {
+    rightX =
+        drawBSTTreeNode(right, depth + 1, index, cellWidth, canvas, lineWidth);
+  }
+
+  row = depth * 2;
+
+  length = snprintf(buffer, sizeof(buffer), "%d", getBSTNodeData(node));
+
+  for (int i = 0; i < length; i++) {
+    canvas[row * (lineWidth + 1) + x - (size_t)length / 2 + (size_t)i] =
+        buffer[i];
+  }
+
+  if (left != NULL) {
+    canvas[(row + 1) * (lineWidth + 1) + (x + leftX) / 2] = '/';
+  }
+
+  if (right != NULL) {
+    canvas[(row + 1) * (lineWidth + 1) + (x + rightX) / 2] = '\\';
+  }
+
+  return x;
 }
